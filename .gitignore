@@ -1,0 +1,25 @@
+# Operating System files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Editor and IDE directories
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Node / Scratch / Temp profiles
+node_modules/
+smartnotes-chrome-profile/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.tmp/
+temp/
+

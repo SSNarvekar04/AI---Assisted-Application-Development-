@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Notes — Smart Note-Taking Application</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ HEADER ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo">&#128221;</span>
+      <div class="brand-text">
+        <h1>Smart Notes</h1>
+        <span class="brand-sub">Your college note companion</span>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-icon">&#128269;</span>
+      <input id="searchInput" type="search" placeholder="Search by title or content..." autocomplete="off" aria-label="Search notes" />
+      <button id="clearSearch" class="clear-search" title="Clear search" aria-label="Clear search" hidden>&#10005;</button>
+    </div>
+
+    <div class="topbar-actions">
+      <button id="aiAssistBtn" class="btn btn-ai" title="Ask AI Assistant (Ctrl+J)" aria-label="Open AI Assistant">
+        <span class="ai-sparkle">&#10024;</span> Ask AI
+      </button>
+      <button id="newNoteBtn" class="btn btn-primary">
+        <span class="btn-plus">+</span> New Note
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+      <section class="side-block">
+        <div class="side-title">Library</div>
+        <ul class="side-list" id="libraryList">
+          <li><button class="side-item active" data-view="all"><span class="si-icon">&#128196;</span> All Notes <span class="count" id="countAll">0</span></button></li>
+          <li><button class="side-item" data-view="pinned"><span class="si-icon">&#128204;</span> Pinned <span class="count" id="countPinned">0</span></button></li>
+          <li><button class="side-item" data-view="trash"><span class="si-icon">&#128465;</span> Trash <span class="count" id="countTrash">0</span></button></li>
+        </ul>
+      </section>
+
+      <section class="side-block">
+        <div class="side-title">Folders <button id="addFolderBtn" class="mini-btn" title="Create folder">+</button></div>
+        <ul class="side-list" id="folderList"></ul>
+        <div class="side-empty" id="folderEmpty" hidden>No folders yet</div>
+      </section>
+
+      <section class="side-block">
+        <div class="side-title">Tags</div>
+        <div class="tag-cloud" id="tagCloud"></div>
+        <div class="side-empty" id="tagEmpty" hidden>No tags yet</div>
+      </section>
+
+      <section class="side-block side-footer">
+        <button id="clearAllBtn" class="btn btn-ghost btn-block">&#128465; Empty trash</button>
+        <div class="storage-info">Stored locally in this browser</div>
+      </section>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <main class="main">
+      <div class="toolbar">
+        <div class="crumb" id="crumb">All Notes</div>
+        <div class="toolbar-right">
+          <span class="result-count" id="resultCount">0 notes</span>
+          <select id="sortSelect" class="sort-select" aria-label="Sort notes">
+            <option value="updated">Last updated</option>
+            <option value="created">Date created</option>
+            <option value="title">Title (A–Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="active-filters" id="activeFilters" hidden></div>
+
+      <div class="notes-grid" id="notesGrid"></div>
+
+      <!-- Empty state (general) -->
+      <div class="empty-state" id="emptyState" hidden>
+        <div class="empty-emoji">&#128196;</div>
+        <h2 id="emptyTitle">No notes yet</h2>
+        <p id="emptyText">Create your first note and it will be saved automatically in your browser.</p>
+        <button class="btn btn-primary" id="emptyAction">+ Create your first note</button>
+      </div>
+
+      <!-- Empty state (no search results) -->
+      <div class="empty-state" id="noResults" hidden>
+        <div class="empty-emoji">&#128270;</div>
+        <h2>No matching notes</h2>
+        <p id="noResultsText">Try a different keyword.</p>
+        <button class="btn btn-secondary" id="resetFiltersBtn">Reset search &amp; filters</button>
+      </div>
+    </main>
+  </div>
+
+  <button id="fab" class="fab" title="New note" aria-label="New note">+</button>
+</div>
+
+<!-- ============ NOTE MODAL ============ -->
+<div class="overlay" id="noteOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h2 id="modalTitle">New Note</h2>
+      <button class="icon-btn" id="closeModal" aria-label="Close">&#10005;</button>
+    </div>
+    <form id="noteForm" novalidate>
+      <label class="field">
+        <span class="label">Title <em>*</em></span>
+        <input id="noteTitle" type="text" maxlength="120" placeholder="e.g. DBMS Unit 3 — Normalization" />
+        <small class="err" id="titleErr" hidden>Please enter a title.</small>
+      </label>
+
+      <div class="ai-editor-bar">
+        <div class="ai-editor-badge"><span class="ai-sparkle">&#10024;</span> AI Copilot</div>
+        <div class="ai-editor-tools">
+          <button type="button" class="ai-chip-btn" id="aiAutoTitleBtn" title="Generate descriptive title from note content">&#10024; Title</button>
+          <button type="button" class="ai-chip-btn" id="aiAutoTagBtn" title="Auto-suggest tags from content">&#127991;&#65039; Tags</button>
+          <button type="button" class="ai-chip-btn" id="aiSummarizeBtn" title="Add a key takeaways summary">&#128221; Summarize</button>
+          <button type="button" class="ai-chip-btn" id="aiPolishBtn" title="Improve grammar, clarity and flow">&#129668; Polish</button>
+          <button type="button" class="ai-chip-btn" id="aiTasksBtn" title="Extract to-do items and deadlines">&#9989; Tasks</button>
+          <button type="button" class="ai-chip-btn" id="aiStudyBtn" title="Reformat into structured study notes">&#128218; Study Guide</button>
+        </div>
+      </div>
+      <div class="ai-status" id="aiModalStatus" hidden>
+        <span class="ai-status-spinner"></span>
+        <span id="aiModalStatusText">AI is thinking...</span>
+      </div>
+
+      <label class="field">
+        <div class="field-head">
+          <span class="label">Content</span>
+          <span class="content-stats" id="contentStats">0 words &bull; 0 min read</span>
+        </div>
+        <textarea id="noteContent" rows="8" maxlength="5000" placeholder="Write your note here... Use AI tools above to summarize, format or extract tasks."></textarea>
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="label">Folder</span>
+          <select id="noteFolder"></select>
+        </label>
+        <label class="field">
+          <span class="label">Tags</span>
+          <input id="noteTags" type="text" placeholder="exam, dbms, unit3" />
+          <small class="hint">Separate tags with commas</small>
+        </label>
+      </div>
+
+      <label class="check-field">
+        <input id="notePin" type="checkbox" />
+        <span>&#128204; Pin this note to the top</span>
+      </label>
+
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="cancelModal">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="saveNote">Save Note</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ TEXT PROMPT DIALOG ============ -->
+<div class="overlay" id="promptOverlay" hidden>
+  <div class="confirm-box" role="dialog" aria-modal="true" aria-labelledby="promptTitle">
+    <div class="confirm-icon">&#128193;</div>
+    <h3 id="promptTitle">New folder</h3>
+    <p id="promptHint">Enter a name for the folder.</p>
+    <input id="promptInput" class="prompt-input" type="text" maxlength="40" placeholder="Folder name" autocomplete="off" />
+    <small class="err" id="promptErr" hidden>Please enter a folder name.</small>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="promptCancel">Cancel</button>
+      <button class="btn btn-primary" id="promptOk">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRM DIALOG ============ -->
+<div class="overlay" id="confirmOverlay" hidden>
+  <div class="confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="confirm-icon" id="confirmIcon">&#9888;&#65039;</div>
+    <h3 id="confirmTitle">Delete this note?</h3>
+    <p id="confirmText">This action cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="confirmCancel">Cancel</button>
+      <button class="btn btn-danger" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AI ASSISTANT MODAL ============ -->
+<div class="overlay" id="aiAssistantOverlay" hidden>
+  <div class="modal ai-modal" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+    <div class="modal-head ai-head">
+      <div class="ai-head-title">
+        <span class="ai-badge-icon">&#10024;</span>
+        <div>
+          <h2 id="aiModalTitle">AI Notes Assistant</h2>
+          <span class="ai-head-subtitle" id="aiEngineLabel">Engine: Built-in Smart Local AI (Offline)</span>
+        </div>
+      </div>
+      <div class="ai-head-controls">
+        <button class="icon-btn" id="openAiSettingsBtn" title="AI Settings (API Key)" aria-label="AI Settings">&#9881;&#65039;</button>
+        <button class="icon-btn" id="clearAiChatBtn" title="Clear conversation" aria-label="Clear chat">&#129529;</button>
+        <button class="icon-btn" id="closeAiModal" aria-label="Close AI Assistant">&#10005;</button>
+      </div>
+    </div>
+
+    <div class="ai-body">
+      <!-- Quick prompts -->
+      <div class="ai-prompt-chips">
+        <span class="chips-label">Quick Prompts:</span>
+        <button type="button" class="ai-chip" data-prompt="Summarize all my notes into key takeaways">&#128221; Summarize all notes</button>
+        <button type="button" class="ai-chip" data-prompt="Extract all tasks and deadlines across all my notes">&#9989; Find all tasks</button>
+        <button type="button" class="ai-chip" data-prompt="Create a quick study quiz with Q&A from my notes">&#127891; Study quiz</button>
+        <button type="button" class="ai-chip" data-prompt="What are the main topics and concepts I have written about?">&#128161; Key concepts</button>
+      </div>
+
+      <!-- Chat history stream -->
+      <div class="ai-chat-history" id="aiChatHistory">
+        <div class="ai-msg ai-msg-bot">
+          <div class="ai-avatar">&#10024;</div>
+          <div class="ai-msg-content">
+            <p><strong>Hi! I'm your AI Notes Copilot.</strong></p>
+            <p>I can answer questions based on your notes, extract action items, create study guides, or find connections across your library.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat input form -->
+      <form id="aiChatForm" class="ai-chat-form">
+        <input id="aiChatInput" type="text" placeholder="Ask anything about your notes (e.g. 'What did I write about DBMS?')..." autocomplete="off" />
+        <button type="submit" class="btn btn-ai" id="aiSendBtn">
+          <span>Ask</span> &#10148;
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AI SETTINGS MODAL ============ -->
+<div class="overlay" id="aiSettingsOverlay" hidden>
+  <div class="confirm-box ai-settings-box" role="dialog" aria-modal="true" aria-labelledby="aiSettingsTitle">
+    <div class="confirm-icon">&#9881;&#65039;</div>
+    <h3 id="aiSettingsTitle">AI Configuration</h3>
+    <p>Choose your AI engine. Built-in Smart Local AI requires no setup and runs 100% offline.</p>
+    
+    <div class="ai-settings-form">
+      <label class="field text-left">
+        <span class="label">AI Engine</span>
+        <select id="aiEngineSelect">
+          <option value="local">⚡ Built-in Smart Local AI (Instant, 100% Offline)</option>
+          <option value="gemini">🌐 Google Gemini API (Direct Cloud LLM)</option>
+          <option value="openai">🌐 OpenAI Compatible API</option>
+        </select>
+      </label>
+
+      <div id="aiCloudFields" hidden>
+        <label class="field text-left">
+          <span class="label">API Key</span>
+          <input id="aiApiKey" type="password" placeholder="Enter API Key..." autocomplete="off" />
+          <small class="hint">Stored only in your browser's localStorage.</small>
+        </label>
+        <label class="field text-left">
+          <span class="label">Model (Optional)</span>
+          <input id="aiModelInput" type="text" placeholder="e.g. gemini-1.5-flash or gpt-4o-mini" />
+        </label>
+      </div>
+    </div>
+
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="aiSettingsCancel">Cancel</button>
+      <button class="btn btn-primary" id="aiSettingsSave">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AI QUICK SUMMARY MODAL ============ -->
+<div class="overlay" id="aiSummaryOverlay" hidden>
+  <div class="modal ai-summary-modal" role="dialog" aria-modal="true" aria-labelledby="aiSummaryTitle">
+    <div class="modal-head">
+      <div class="ai-head-title">
+        <span class="ai-badge-icon">&#10024;</span>
+        <h2 id="aiSummaryTitle">AI Note Insights</h2>
+      </div>
+      <button class="icon-btn" id="closeAiSummary" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="ai-summary-content">
+      <h3 class="ai-summary-note-title" id="aiSummaryNoteTitle">Note Title</h3>
+      
+      <div class="ai-metric-pills">
+        <span class="metric-pill" id="aiMetricWords">0 words</span>
+        <span class="metric-pill" id="aiMetricTime">0 min read</span>
+        <span class="metric-pill" id="aiMetricFolder">Folder</span>
+      </div>
+
+      <div class="ai-section">
+        <div class="ai-section-title">&#128221; Executive Summary</div>
+        <div class="ai-section-body" id="aiSummaryBody"></div>
+      </div>
+
+      <div class="ai-section" id="aiTasksSection">
+        <div class="ai-section-title">&#9989; Detected Action Items</div>
+        <ul class="ai-task-list" id="aiSummaryTasks"></ul>
+      </div>
+
+      <div class="ai-section" id="aiTagsSection">
+        <div class="ai-section-title">&#127991;&#65039; Recommended Tags</div>
+        <div class="tag-cloud" id="aiSummaryTags"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="aiCopySummaryBtn">&#128203; Copy Summary</button>
+      <button class="btn btn-primary" id="aiEditFromSummaryBtn">&#9998; Open &amp; Edit Note</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="script.js"></script>
+</body>
+</html>
