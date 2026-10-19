@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Environment variables / API keys (never commit!)
 .env
 *.env
@@ -22,3 +23,30 @@ env/
 Thumbs.db
 .DS_Store
 
+=======
+# Operating System files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Editor and IDE directories
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Node / Scratch / Temp profiles
+node_modules/
+smartnotes-chrome-profile/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.tmp/
+temp/
+
+>>>>>>> 1d37a26a185375cbb7cb7f2d8f34daa39ed640b0
